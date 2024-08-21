@@ -4,6 +4,7 @@
 }
 
 .LabelHeading {
+	align-items: center;
 	margin: 0 0 20px;
 	padding: 0;
 }
@@ -13,9 +14,7 @@
 }
 
 .ErrorLabelHeading {
+	margin: -20px 0 40px;
+	padding: 0;
 	color: coral;
-}
-
-.SubmitBtn {
-	cursor: pointer;
 }

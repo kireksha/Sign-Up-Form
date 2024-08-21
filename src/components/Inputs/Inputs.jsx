@@ -1,85 +1,59 @@
-import { useState, useRef } from "react";
 import styles from "./Inputs.module.css"
+import { useEffect } from "react"
+import { validate } from "../../utils/validate"
 
-export const InputsLayout = ({ onSubmit, getState, updateState }) => {
+export const InputsLayout = ({ errors, setErrors, touched, data, handleChange, handleBlur }) => {
 
-	const { email, password, repeatPassword } = getState();
-	const [emailError, setEmailError] = useState(null)
-	const [passwordError, setPasswordError] = useState(null)
-	const [repeatPasswordError, setRepeatPasswordError] = useState(null)
-
-	const submitBtnRef = useRef(null)
-
-
-	const onChange = ({ target }) => {
-		updateState(target.name, target.value);
-
-		let newError = null;
-		if (target.name === 'email' && emailError !== null) {
-			const validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-			if (!validRegex.test(target.value)) {
-				newError = "Введите корректный email";
-			}
-			setEmailError(newError)
-		} else if (target.name === 'password') {
-			if (!/[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]/.test(target.value) || /[а-яА-Я]/.test(target.value)) {
-				newError = "Допускаются только латинские буквы, цифры, а также специальные символы"
-			} else if (repeatPassword.length > 0 && target.value !== repeatPassword) {
-				setRepeatPasswordError('Пароли не совпадают')
-			} else if (repeatPassword.length > 0 && target.value === repeatPassword) {
-				setRepeatPasswordError(null)
-			}
-			setPasswordError(newError)
-		} else if (target.name === 'repeatPassword') {
-			if (target.value !== password) {
-				newError = "Пароли не совпадают"
-			} else if (target.value === password && !emailError && !passwordError) {
-				console.log('should work')
-				submitBtnRef.current.focus();
-			}
-			setRepeatPasswordError(newError)
-		}
+	const showError = (name) => {
+		return touched[name] && errors[name]
 	}
 
-	const onBlur = ({ target }) => {
+	useEffect(() => {
+		const errors = validate(data, validateScheme)
+		setErrors(errors)
+	}, [data])
 
-		let newError = null;
-		if (target.name === 'email') {
-			const validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-			if (!validRegex.test(target.value)) {
-				newError = "Введите корректный email";
-			} else if (target.value === '') {
-				newError = "Поле обязательно для заполнения "
+	const validateScheme = {
+		email: {
+			required: {
+				message: "Обязательное поле",
+			},
+			isEmail: {
+				message: "Некорректный email",
+				params: /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
+			},
+		},
+		password: {
+			minLength: {
+				message: "Пароль содержит минимум 8 символов",
+			},
+		},
+		repeatPassword: {
+			sameWithPassword: {
+				message: "Пароли не совпадают",
+				params: data['password'],
 			}
-			setEmailError(newError)
-		} else if (target.name === 'password') {
-			if (target.value.length < 8) {
-				newError = "Допускается не менее 8 символов"
-			}
-			setPasswordError(newError)
-		}
-	}
-
-
-
+		},
+	};
 
 	return (
 		<>
-			<label className={styles.LabelContainer} htmlFor="email">
-				<h3 className={`${styles.LabelHeading} ${emailError && styles.ErrorLabelHeading}`}>{emailError ? emailError : 'Введите email'}</h3>
-				<input className={styles.InputContent} type="email" name="email" placeholder="developing.is@great.com" value={email} onChange={onChange} onBlur={onBlur} />
-			</label>
+			<label className={styles.LabelContainer} htmlFor="email"></label>
+			<h3 className={styles.LabelHeading}>Введите email</h3>
+			<input className={styles.InputContent} type="email" name="email" placeholder="developing.is@great.com" value={data['email']} onChange={handleChange} onBlur={handleBlur} />
+			{showError('email') && <p className={styles.ErrorLabelHeading}>{errors.email}</p>}
 
-			<label className={styles.LabelContainer} htmlFor="password">
-				<h3 className={`${styles.LabelHeading} ${passwordError && styles.ErrorLabelHeading}`}>{passwordError ? passwordError : 'Придумайте пароль'}</h3>
-				<input className={styles.InputContent} type="password" name="password" placeholder="8 symbols min, only Latin" value={password} onChange={onChange} onBlur={onBlur} />
-			</label>
 
-			<label className={styles.LabelContainer} htmlFor="repeatPassword">
-				<h3 className={`${styles.LabelHeading} ${repeatPasswordError && styles.ErrorLabelHeading}`}>{repeatPasswordError ? repeatPasswordError : 'Повторите пароль'}</h3>
-				<input className={styles.InputContent} type="password" name="repeatPassword" placeholder="********" value={repeatPassword} onChange={onChange} onBlur={onBlur} />
-			</label>
-			<button ref={submitBtnRef} type="submit" onClick={onSubmit} className={styles.SubmitBtn} disabled={emailError !== null || passwordError !== null || repeatPasswordError !== null}>Зарегистрироваться</button>
+			<label className={styles.LabelContainer} htmlFor="password"></label>
+			<h3 className={styles.LabelHeading}>Придумайте пароль</h3>
+			<input className={styles.InputContent} type="password" name="password" placeholder="8 symbols min, only Latin" value={data['password']} onChange={handleChange} onBlur={handleBlur} />
+			{showError('password') && <p className={styles.ErrorLabelHeading}>{errors.password}</p>}
+
+
+			<label className={styles.LabelContainer} htmlFor="repeatPassword"></label>
+			<h3 className={styles.LabelHeading}>Повторите пароль</h3>
+			<input className={styles.InputContent} type="password" name="repeatPassword" placeholder="********" value={data['repeatPassword']} onChange={handleChange} onBlur={handleBlur} />
+			{showError('repeatPassword') && <p className={styles.ErrorLabelHeading}>{errors.repeatPassword}</p>}
 		</>
-	);
-};
+	)
+}

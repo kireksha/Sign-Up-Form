@@ -5,3 +5,7 @@
 	margin: 0 auto;
 	padding: 30px 0;
 }
+
+.SubmitBtn {
+	cursor: pointer;
+}
