@@ -1,6 +1,6 @@
 import styles from './SignUpForm.module.css';
 import { useStore } from "../../hooks/useStore";
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -15,39 +15,29 @@ export const SignUpForm = () => {
 	const Schema = yup
 		.object({
 			email: yup.string().email("Неверный формат").required("Это обязательное поле"),
-			password: yup.string().required("Это обязательное поле").test({
-				name: "password",
-				skipAbsent: true,
-				test(value, ctx) {
-					if (value.length < 8) {
-						return ctx.createError({ message: 'Пароль должен содержать минимум 8 символов' })
-					} else { return true }
-				}
-			}),
-			repeatPassword: yup.string().test({
-				name: "repeatPassword",
-				skipAbsent: true,
-				test(value, ctx) {
-					if (value === data["password"]) {
-						return true
-					} else {
-						return ctx.createError({ message: "Пароли не совпадают" })
-					}
-				}
-			}),
+			password: yup.string().required("Это обязательное поле").min('8', 'Минимум 8 символов'),
+			repeatPassword: yup.string()
+			.oneOf([yup.ref('password'), null], 'Пароли не совпадают'),
 		})
 
 	const {
 		register,
 		handleSubmit,
-		formState: { errors },
+		formState: { errors, isValid },
 	} = useForm({
-		resolver: yupResolver(Schema)
+		resolver: yupResolver(Schema),
+		mode: 'onTouched',
 	})
 
 	const handleChange = ({ target }) => {
 		updateState(target.name, target.value)
 	}
+
+	useEffect(() => {
+		if (isValid) {
+			buttonRef.current.focus()
+		}
+	}, [isValid])
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} className={styles.Form}>
@@ -66,7 +56,7 @@ export const SignUpForm = () => {
 			<input {...register("repeatPassword")} className={styles.InputContent} type="password" name="repeatPassword" placeholder="********" value={data['repeatPassword']} onChange={handleChange} />
 			{errors.repeatPassword && <p className={styles.ErrorLabelHeading}>{errors.repeatPassword?.message}</p>}
 
-			<button ref={buttonRef} type="submit" onClick={handleSubmit(onSubmit)} className={styles.SubmitBtn}>Зарегистрироваться</button>
+			<button ref={buttonRef} type="submit" onClick={handleSubmit(onSubmit)} disabled={!isValid} className={styles.SubmitBtn}>Зарегистрироваться</button>
 		</form>
 	);
 };
